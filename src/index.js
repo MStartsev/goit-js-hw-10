@@ -14,34 +14,68 @@ const countryInfoEl = document.querySelector('.country-info');
 const searchText = () => {
   const value = searchBoxEl.value.trim();
   searchBoxEl.value = value;
-  console.log(value);
-  console.log(value);
 
-  function logCountries(name) {
+  const logCountries = name => {
     fetchCountries(name)
       .then(countries => {
-        console.log(countries);
-        createCountryList(countries);
-      })
-      .catch(error => console.error(error));
-  }
+        if (countries.length > 10) {
+          Notify.info(
+            'Too many matches found. Please enter a more specific name.'
+          );
+          return;
+        }
 
-  logCountries(value);
+        console.log(countries);
+
+        countries.length === 1
+          ? createCountryCard(countries)
+          : createCountryList(countries);
+      })
+
+      .catch(error => console.log(error));
+  };
+
+  if (value) logCountries(value);
 };
 
 searchBoxEl.addEventListener('input', debounce(searchText, DEBOUNCE_DELAY));
 
 function createCountryList(countries) {
-  const markup = countries
-    .map(
-      ({ name, flags }) =>
-        `<li class='country-element'>
-            <img src="${flags.svg}" alt="${flags.alt}" width=30px height=30px>
-            <h2>${name.official}<h2>
-        </li>`
-    )
-    .join('');
-  console.log(markup);
+  const list = countries.reduce(
+    (arr, { name, flags }) =>
+      `${arr}
+      <li class='country-element'>
+          <img src="${flags.svg}" alt="${flags.alt}" width=30px height=30px>
+          <h2>${name.official}<h2>
+      </li>
+  `,
+    ''
+  );
+  countryInfoEl.innerHTML = '';
+  countryListEl.innerHTML = list;
+}
 
-  countryListEl.innerHTML = markup;
+function createCountryCard(countries) {
+  const languagesList = languages => Object.values(languages).join(', ');
+
+  const list = countries.map(
+    ({ name, capital, population, flags, languages }) =>
+      `<img src="${flags.svg}" alt="${flags.alt}" width=30px height=30px>
+       <h2>${name.official}<h2>
+        <ul>
+          <li class='country-card'>
+          <span>Capital:</span> ${capital}
+          </li>
+          <li class='country-card'>
+          <span>Population:</span> ${population}
+          </li>
+          <li class='country-card'>
+          <span>Languages:</span> ${languagesList(languages)}
+          </li>
+        </ul>
+          `
+  );
+
+  countryListEl.innerHTML = '';
+  countryInfoEl.innerHTML = list;
 }
