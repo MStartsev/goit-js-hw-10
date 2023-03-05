@@ -48,9 +48,7 @@ const searchText = () => {
 searchBoxEl.addEventListener('input', debounce(searchText, DEBOUNCE_DELAY));
 
 function writeCountry(container, value) {
-  if (container === countryListEl) {
-    countryInfoEl.innerHTML = '';
-  }
+  if (container === countryListEl) countryInfoEl.innerHTML = '';
   container.innerHTML = value;
 }
 
