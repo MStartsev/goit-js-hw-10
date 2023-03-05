@@ -7,13 +7,23 @@ import './css/styles.css';
 
 const DEBOUNCE_DELAY = 300;
 
-const searchBoxEl = document.querySelector('#search-box');
-const countryListEl = document.querySelector('.country-list');
-const countryInfoEl = document.querySelector('.country-info');
+const searchElements = {
+  searchBox: '#search-box',
+  countryList: '.country-list',
+  countryInfo: '.country-info',
+};
+const { countryList, countryInfo } = searchElements;
+
+const searchEl = elements =>
+  Object.entries(elements).reduce((arr, [key, value]) => {
+    arr[`${key}El`] = document.querySelector(value);
+    return arr;
+  }, {});
+
+const { searchBoxEl, countryListEl, countryInfoEl } = searchEl(searchElements);
 
 const searchText = () => {
   const value = searchBoxEl.value.trim();
-  searchBoxEl.value = value;
 
   const logCountries = name => {
     fetchCountries(name)
@@ -25,57 +35,66 @@ const searchText = () => {
           return;
         }
 
-        console.log(countries);
-
-        countries.length === 1
-          ? createCountryCard(countries)
-          : createCountryList(countries);
+        createCountryList(countries);
+        if (countries.length === 1) createCountryCard(countries);
       })
 
       .catch(error => console.log(error));
   };
 
-  if (value) logCountries(value);
+  value ? logCountries(value) : writeCountry(countryListEl, '');
 };
 
 searchBoxEl.addEventListener('input', debounce(searchText, DEBOUNCE_DELAY));
 
+function writeCountry(container, value) {
+  if (container === countryListEl) {
+    countryInfoEl.innerHTML = '';
+  }
+  container.innerHTML = value;
+}
+
+const clearFirstCharacter = str => str.slice(1);
+
 function createCountryList(countries) {
+  const containerClass = clearFirstCharacter(countryList);
+
   const list = countries.reduce(
     (arr, { name, flags }) =>
       `${arr}
-      <li class='country-element'>
-          <img src="${flags.svg}" alt="${flags.alt}" width=30px height=30px>
-          <h2>${name.official}<h2>
+      <li class='${containerClass}__item'>
+          <img class='${containerClass}__img' src="${flags.svg}" alt="${flags.alt}" width=80px height=50px>
+          <h2 class='${containerClass}__name'>${name.official}<h2>
       </li>
   `,
     ''
   );
-  countryInfoEl.innerHTML = '';
-  countryListEl.innerHTML = list;
+
+  writeCountry(countryListEl, list);
 }
 
 function createCountryCard(countries) {
+  const containerClass = clearFirstCharacter(countryInfo);
   const languagesList = languages => Object.values(languages).join(', ');
 
-  const list = countries.map(
-    ({ name, capital, population, flags, languages }) =>
-      `<img src="${flags.svg}" alt="${flags.alt}" width=30px height=30px>
-       <h2>${name.official}<h2>
-        <ul>
-          <li class='country-card'>
-          <span>Capital:</span> ${capital}
+  const list = countries
+    .map(
+      ({ capital, population, languages }) =>
+        `<ul class='${containerClass}__list'>
+          <li class='${containerClass}__item'>
+          <span class='${containerClass}__text'>Capital:</span> ${capital}
           </li>
-          <li class='country-card'>
-          <span>Population:</span> ${population}
+          <li class='${containerClass}__item'>
+          <span class='${containerClass}__text'>Population:</span> ${population}
           </li>
-          <li class='country-card'>
-          <span>Languages:</span> ${languagesList(languages)}
+          <li class='${containerClass}__item'>
+          <span class='${containerClass}__text'>Languages:</span> ${languagesList(
+          languages
+        )}
           </li>
-        </ul>
-          `
-  );
+        </ul>`
+    )
+    .join('');
 
-  countryListEl.innerHTML = '';
-  countryInfoEl.innerHTML = list;
+  writeCountry(countryInfoEl, list);
 }
